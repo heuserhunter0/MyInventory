@@ -36,7 +36,8 @@ dependencies:
   shared_preferences: ^2.0.10
   firebase_core: ^3.6.0   # Firebase core SDK for Flutter
   firebase_auth: ^5.3.1   # Firebase Authentication SDK for Flutter
-
+  flutter_dotenv: ^5.0.2  # Load environment variables from a .env file
+  
 
 
 dev_dependencies:
