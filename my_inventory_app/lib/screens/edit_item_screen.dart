@@ -1,12 +1,10 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_constructors_in_immutables, use_key_in_widget_constructors, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
-import 'package:my_inventory_app/models/item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditItemScreen extends StatefulWidget {
-  final Item item;  // Pass the existing item
+  final String itemId;
 
-  EditItemScreen({required this.item});
+  EditItemScreen({required this.itemId});
 
   @override
   _EditItemScreenState createState() => _EditItemScreenState();
@@ -14,20 +12,49 @@ class EditItemScreen extends StatefulWidget {
 
 class _EditItemScreenState extends State<EditItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  late String itemName;
-  late int quantity;
+  String itemName = '';
+  int quantity = 0;
 
   @override
   void initState() {
     super.initState();
-    itemName = widget.item.name;
-    quantity = widget.item.quantity;
+    _loadItem();
+  }
+
+  Future<void> _loadItem() async {
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('items')
+        .doc(widget.itemId)
+        .get();
+    setState(() {
+      itemName = doc['name'];
+      quantity = doc['quantity'];
+    });
+  }
+
+  Future<void> _editItemInFirestore(String name, int quantity) async {
+    try {
+      await FirebaseFirestore.instance.collection('items').doc(widget.itemId).update({
+        'name': name,
+        'quantity': quantity,
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Item updated successfully!'),
+      ));
+    } catch (e) {
+      print('Error updating item: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to update item'),
+      ));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Edit Item')),
+      appBar: AppBar(
+        title: Text('Edit Item'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -39,7 +66,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 decoration: InputDecoration(labelText: 'Item Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the item name';
+                    return 'Please enter an item name';
                   }
                   return null;
                 },
@@ -52,8 +79,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 decoration: InputDecoration(labelText: 'Quantity'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || int.tryParse(value) == null) {
-                    return 'Please enter a valid quantity';
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a quantity';
                   }
                   return null;
                 },
@@ -66,7 +93,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-                    // TODO: Update item in database
+                    _editItemInFirestore(itemName, quantity);
+                    Navigator.pop(context); // Go back after editing
                   }
                 },
                 child: Text('Save Changes'),

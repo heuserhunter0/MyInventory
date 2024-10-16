@@ -1,87 +1,61 @@
- // ignore_for_file: use_key_in_widget_constructors, prefer_const_constructors, library_private_types_in_public_api
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
- import 'package:flutter/material.dart';
-import 'package:my_inventory_app/screens/add_item_screen.dart';
-import 'package:my_inventory_app/screens/edit_item_screen.dart';
-import 'package:my_inventory_app/screens/item_details_screen.dart';
-import 'package:my_inventory_app/models/item.dart';
-
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  // This would be a list fetched from your database or stored locally
-  List<Item> items = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // TODO: Fetch items from Firebase or local storage
-    // For now, we're just using mock data.
-    items = [
-      Item(name: 'Item 1', quantity: 10, id: ''),
-      Item(name: 'Item 2', quantity: 5, id: ''),
-      // Add more mock items or fetch them from Firebase
-    ];
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Inventory'),
+        title: Text('Home'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return ListTile(
-                  title: Text(item.name),
-                  subtitle: Text('Quantity: ${item.quantity}'),
-                  onTap: () {
-                    // Navigate to item details screen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ItemDetailsScreen(item: item),
-                      ),
-                    );
-                  },
-                  trailing: IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () {
-                      // Navigate to edit item screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditItemScreen(item: item),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                // Navigate to add item screen
-                Navigator.push(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('items').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final items = snapshot.data!.docs.map((doc) {
+            final itemId = doc.id;
+            final itemName = doc['name'];
+            final itemQuantity = doc['quantity'];
+
+            return ListTile(
+              title: Text(itemName),
+              subtitle: Text('Quantity: $itemQuantity'),
+              // Tapping on the list item will navigate to the item details screen
+              onTap: () {
+                Navigator.pushNamed(
                   context,
-                  MaterialPageRoute(builder: (context) => AddItemScreen()),
+                  '/item_details',
+                  arguments: itemId,  // Pass the itemId to the details screen
                 );
               },
-              child: Text('Add New Item'),
-            ),
-          ),
-        ],
+              // Option to edit the item
+              trailing: IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/edit_item',
+                    arguments: itemId,  // Pass the itemId to the edit screen
+                  );
+                },
+              ),
+            );
+          }).toList();
+
+          return ListView(children: items);
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/add_item');
+        },
+        child: Icon(Icons.add),
       ),
     );
   }

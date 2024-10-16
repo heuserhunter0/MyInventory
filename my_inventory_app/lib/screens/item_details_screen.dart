@@ -1,36 +1,58 @@
-// ignore_for_file: prefer_const_constructors_in_immutables, use_key_in_widget_constructors, prefer_const_constructors
-
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:my_inventory_app/models/item.dart';
 
 class ItemDetailsScreen extends StatelessWidget {
-  final Item item;
+  final String itemId;
 
-  ItemDetailsScreen({required this.item});
+  ItemDetailsScreen({required this.itemId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${item.name} Details'),
+        title: Text('Item Details'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              item.name,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection('items').doc(itemId).get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          var itemData = snapshot.data!.data() as Map<String, dynamic>;
+          String itemName = itemData['name'];
+          int itemQuantity = itemData['quantity'];
+
+          return Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Item Name: $itemName', style: TextStyle(fontSize: 22)),
+                SizedBox(height: 10),
+                Text('Quantity: $itemQuantity', style: TextStyle(fontSize: 18)),
+                SizedBox(height: 20),
+
+                // QR Code generation section
+                Center(
+                  child: QrImageView(
+                    data: itemId,  // You can change this to itemName or any unique data
+                    version: QrVersions.auto,
+                    size: 200.0,  // Size of the QR code
+                    gapless: false,
+                  ),
+                ),
+
+                SizedBox(height: 20),
+                Text('Scan this QR code to quickly access the item.', style: TextStyle(fontSize: 16)),
+              ],
             ),
-            Text('Quantity: ${item.quantity}'),
-            SizedBox(height: 20),
-            QrImageView(
-              data: item.name,  // Replace with actual data you want to encode
-              size: 200,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
