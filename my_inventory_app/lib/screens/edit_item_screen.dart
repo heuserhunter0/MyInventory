@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors_in_immutables, use_key_in_widget_constructors, library_private_types_in_public_api, use_build_context_synchronously, prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -42,6 +44,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
         content: Text('Item updated successfully!'),
       ));
     } catch (e) {
+      // ignore: avoid_print
       print('Error updating item: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Failed to update item'),

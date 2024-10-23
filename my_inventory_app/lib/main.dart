@@ -38,6 +38,7 @@ class MyApp extends StatelessWidget {
           final String itemId = ModalRoute.of(context)!.settings.arguments as String;
           return ItemDetailsScreen(itemId: itemId,);
         }, // Route to item details screen
+        '/qr_scanner': (context) => QRViewExample(), // Route to QR scanner screen
       },
     );
   }

@@ -39,6 +39,7 @@ dependencies:
   flutter_dotenv: ^5.0.2  # Load environment variables from a .env file
   qr_flutter: ^4.1.0       # QR code generator for Flutter
   cloud_firestore: ^5.4.4
+  qr_code_scanner: ^1.0.0
 
 
 dev_dependencies:
