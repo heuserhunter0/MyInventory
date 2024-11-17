@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -17,10 +18,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget options based on the bottom navigation selection
   // ignore: unused_field
   static const List<Widget> _widgetOptions = <Widget>[
-    Text('Home Screen'),
-    Text('Items List'),
+    Text('Home Screen'),  
     Text('QR Scanner'),
-  ];
+  ]; 
 
   // Handle navigation bar taps
   void _onItemTapped(int index) {
@@ -37,11 +37,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Home'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: signOut,
+          ),
+        ]
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('items').snapshots(),
@@ -66,16 +77,18 @@ class _HomeScreenState extends State<HomeScreen> {
           return ListView(children: items);
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/add_item'); // Navigate to the Add Item page
+        },
+        child: Icon(Icons.add),
+      ),
       // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Items',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.qr_code_scanner),
