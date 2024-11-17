@@ -137,35 +137,34 @@ class _QRViewExampleState extends State<QRViewExample> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) async {
-      setState(() {
-        qrCodeResult = scanData.code;
-      });
+void _onQRViewCreated(QRViewController controller) {
+  this.controller = controller;
+  controller.scannedDataStream.listen((scanData) async {
+    final qrCodeResult = scanData.code;
 
-      if (qrCodeResult != null) {
-        // Query Firestore to find the item based on the scanned QR code result
-        var querySnapshot = await FirebaseFirestore.instance
-            .collection('items')
-            .where('qrCode', isEqualTo: qrCodeResult)
-            .get();
+    if (qrCodeResult != null) {
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('items')
+          .where('qrCode', isEqualTo: qrCodeResult)
+          .get();
 
-        if (querySnapshot.docs.isNotEmpty) {
-          var itemDoc = querySnapshot.docs.first;
-          Navigator.pushNamed(
-            context,
-            '/item_details',
-            arguments: itemDoc.id,
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Item not found!'),
-          ));
-        }
+      if (querySnapshot.docs.isNotEmpty) {
+        var itemDoc = querySnapshot.docs.first;
+
+        // Navigate directly to item details screen after a successful scan
+        Navigator.pushNamed(
+          context,
+          '/item_details',
+          arguments: itemDoc.id,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Item not found!'),
+        ));
       }
-    });
-  }
+    }
+  });
+}
 
   @override
   void dispose() {
