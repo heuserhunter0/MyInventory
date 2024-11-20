@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     // If QR Scanner is selected, navigate to the QR scanning functionality
-    if (index == 2) {
+    if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => QRViewExample()),
@@ -152,10 +152,16 @@ class _QRViewExampleState extends State<QRViewExample> {
 
 void _onQRViewCreated(QRViewController controller) {
   this.controller = controller;
+
+  // Listen for scan results
   controller.scannedDataStream.listen((scanData) async {
     final qrCodeResult = scanData.code;
 
     if (qrCodeResult != null) {
+      // Stop the camera after scanning
+      await controller.pauseCamera();
+
+      // Search for the scanned QR code in Firestore
       var querySnapshot = await FirebaseFirestore.instance
           .collection('items')
           .where('qrCode', isEqualTo: qrCodeResult)
@@ -164,7 +170,7 @@ void _onQRViewCreated(QRViewController controller) {
       if (querySnapshot.docs.isNotEmpty) {
         var itemDoc = querySnapshot.docs.first;
 
-        // Navigate directly to item details screen after a successful scan
+        // Navigate to the item details page after a successful scan
         Navigator.pushNamed(
           context,
           '/item_details',

@@ -15,8 +15,8 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		9F729CA0967B0396A823E97A /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B720BBC9130792753794345 /* Pods_Runner.framework */; };
 		9FF68587D5A4BC42C3619929 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 60FB018C891099AEFBBB66EF /* GoogleService-Info.plist */; };
+		BCF136CE2CED6AC3009DA091 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B720BBC9130792753794345 /* Pods_Runner.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,7 +82,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9F729CA0967B0396A823E97A /* Pods_Runner.framework in Frameworks */,
+				BCF136CE2CED6AC3009DA091 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -480,6 +480,7 @@
 				DEVELOPMENT_TEAM = N287Y5R4CA;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -668,6 +669,7 @@
 				DEVELOPMENT_TEAM = N287Y5R4CA;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -694,6 +696,7 @@
 				DEVELOPMENT_TEAM = N287Y5R4CA;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

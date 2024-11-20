@@ -15,11 +15,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   Future<void> _addItemToFirestore(String name, int quantity) async {
     try {
-      await FirebaseFirestore.instance.collection('items').add({
+      DocumentReference docRef = await FirebaseFirestore.instance.collection('items').add({
         'name': name,
         'quantity': quantity,
         'createdAt': Timestamp.now(),
       });
+      String qrCodeData = docRef.id;
+      await docRef.update({'qrCode': qrCodeData});
       // ignore: prefer_const_constructors
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Item added successfully!'),
