@@ -2,24 +2,59 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  RegisterScreenState createState() => RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class RegisterScreenState extends State<RegisterScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _orgCodeController = TextEditingController();
   String? _errorMessage;
+  bool _isCreatingOrg = false; // Flag to toggle between options
 
   Future<void> _register() async {
     try {
+      // Create user
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
+      final userId = userCredential.user!.uid;
+
+      if (_isCreatingOrg) {
+        // Create a new organization
+        DocumentReference orgRef = await FirebaseFirestore.instance.collection('organizations').add({
+          'name': 'Organization for ${_emailController.text}',
+          'createdBy': userId,
+        });
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'orgId': orgRef.id,
+          'email': _emailController.text,
+        });
+      } else {
+        // Join an existing organization
+        final orgCode = _orgCodeController.text.trim();
+        final orgSnapshot = await FirebaseFirestore.instance
+            .collection('organizations')
+            .doc(orgCode)
+            .get();
+
+        if (!orgSnapshot.exists) {
+          throw Exception('Organization code not found.');
+        }
+
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'orgId': orgCode,
+          'email': _emailController.text,
+        });
+      }
+
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       setState(() {
@@ -46,6 +81,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: true,
             ),
             SizedBox(height: 20),
+            if (_isCreatingOrg)
+              TextField(
+                decoration: InputDecoration(labelText: 'Organization Name'),
+              )
+            else
+              TextField(
+                controller: _orgCodeController,
+                decoration: InputDecoration(labelText: 'Organization Code'),
+              ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isCreatingOrg = true;
+                    });
+                  },
+                  child: Text('Create Organization'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isCreatingOrg = false;
+                    });
+                  },
+                  child: Text('Join Organization'),
+                ),
+              ],
+            ),
             ElevatedButton(
               onPressed: _register,
               child: Text('Register'),
@@ -57,12 +123,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: TextStyle(color: Colors.red),
               ),
             ],
-            TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/login');
-              },
-              child: Text('Already have an account? Login here'),
-            ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddItemScreen extends StatefulWidget {
   @override
@@ -13,26 +14,32 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String itemName = '';
   int quantity = 0;
 
-  Future<void> _addItemToFirestore(String name, int quantity) async {
-    try {
-      DocumentReference docRef = await FirebaseFirestore.instance.collection('items').add({
-        'name': name,
-        'quantity': quantity,
-        'createdAt': Timestamp.now(),
-      });
-      String qrCodeData = docRef.id;
-      await docRef.update({'qrCode': qrCodeData});
-      // ignore: prefer_const_constructors
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Item added successfully!'),
-      ));
-    } catch (e) {
-      print('Error adding item: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to add item'),
-      ));
-    }
+Future<void> _addItemToFirestore(String name, int quantity) async {
+  try {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final orgId = userDoc['orgId']; // Fetch orgId from the user's document
+
+    DocumentReference docRef = await FirebaseFirestore.instance.collection('items').add({
+      'name': name,
+      'quantity': quantity,
+      'createdAt': Timestamp.now(),
+      'orgId': orgId, // Link item to the organization
+    });
+
+    String qrCodeData = docRef.id;
+    await docRef.update({'qrCode': qrCodeData});
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Item added successfully!'),
+    ));
+  } catch (e) {
+    print('Error adding item: $e');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Failed to add item'),
+    ));
   }
+}
 
   @override
   Widget build(BuildContext context) {
