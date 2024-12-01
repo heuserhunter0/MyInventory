@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../screens/ogranization_code_screen.dart';
+import 'organization_code_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -49,14 +49,26 @@ void _onItemTapped(int index) {
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => QRViewExample(orgId: _currentOrgId)),
-      );
+        MaterialPageRoute(
+          builder: (context) => QRViewExample(orgId: _currentOrgId),
+        ),
+      ).then((_) {
+        // Reset selected index after returning
+        setState(() {
+          _selectedIndex = 0;
+        });
+      });
     }
   } else if (index == 2) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => OrganizationCodeScreen()),
-    );
+    ).then((_) {
+      // Reset selected index after returning
+      setState(() {
+        _selectedIndex = 0;
+      });
+    });
   }
 }
 
@@ -146,7 +158,7 @@ class QRViewExample extends StatefulWidget {
 class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  String? qrCodeResult;
+  bool _scanning = false; // To prevent multiple scans
 
   @override
   void reassemble() {
@@ -175,47 +187,55 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: (qrCodeResult != null)
-                  ? Text('Scanned QR Code: $qrCodeResult')
-                  : Text('Scan a code'),
+              child: Text(
+                'Scan a QR Code',
+                style: TextStyle(fontSize: 18),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-void _onQRViewCreated(QRViewController controller) {
-  this.controller = controller;
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
 
-  controller.scannedDataStream.listen((scanData) async {
-    final qrCodeResult = scanData.code;
+    controller.scannedDataStream.listen((scanData) async {
+      if (!_scanning && scanData.code != null) {
+        _scanning = true; // Mark as scanning to prevent duplicates
+        await controller.pauseCamera();
 
-    if (qrCodeResult != null) {
-      await controller.pauseCamera();
+        final qrCodeResult = scanData.code;
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('items')
+            .where('qrCode', isEqualTo: qrCodeResult)
+            .where('orgId', isEqualTo: widget.orgId) // Match orgId
+            .get();
 
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('items')
-          .where('qrCode', isEqualTo: qrCodeResult)
-          .where('orgId', isEqualTo: widget.orgId) // Match orgId
-          .get();
+        if (querySnapshot.docs.isNotEmpty) {
+          final itemDoc = querySnapshot.docs.first;
 
-      if (querySnapshot.docs.isNotEmpty) {
-        var itemDoc = querySnapshot.docs.first;
+          // Navigate to item details and reset camera after returning
+          await Navigator.pushNamed(
+            context,
+            '/item_details',
+            arguments: itemDoc.id,
+          );
 
-        Navigator.pushNamed(
-          context,
-          '/item_details',
-          arguments: itemDoc.id,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Item not found!'),
-        ));
+          await controller.resumeCamera(); // Reset camera after returning
+          _scanning = false; // Allow next scan
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Item not found!'),
+          ));
+
+          await controller.resumeCamera(); // Resume camera for next scan
+          _scanning = false; // Allow next scan
+        }
       }
-    }
-  });
-}
+    });
+  }
 
   @override
   void dispose() {

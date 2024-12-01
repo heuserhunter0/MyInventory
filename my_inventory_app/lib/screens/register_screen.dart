@@ -29,7 +29,8 @@ class RegisterScreenState extends State<RegisterScreen> {
 
       if (_isCreatingOrg) {
         // Create a new organization
-        DocumentReference orgRef = await FirebaseFirestore.instance.collection('organizations').add({
+        DocumentReference orgRef =
+            await FirebaseFirestore.instance.collection('organizations').add({
           'name': 'Organization for ${_emailController.text}',
           'createdBy': userId,
         });
@@ -40,15 +41,19 @@ class RegisterScreenState extends State<RegisterScreen> {
       } else {
         // Join an existing organization
         final orgCode = _orgCodeController.text.trim();
+
+        if (orgCode.isEmpty) {
+          throw Exception('Organization code cannot be empty.');
+        }
+        // Fetch organization document
         final orgSnapshot = await FirebaseFirestore.instance
             .collection('organizations')
             .doc(orgCode)
             .get();
 
         if (!orgSnapshot.exists) {
-          throw Exception('Organization code not found.');
+          throw Exception('The organization code you entered does not exist.');
         }
-
         await FirebaseFirestore.instance.collection('users').doc(userId).set({
           'orgId': orgCode,
           'email': _emailController.text,
